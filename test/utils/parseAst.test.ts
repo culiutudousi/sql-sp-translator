@@ -1,4 +1,4 @@
-import { parseAst } from '../../src/utils/parseAst';
+import { parseAst, getTableList } from '../../src/utils/parseAst';
 
 describe('parse AST', () => {
     it('parse one sentences', () => {
@@ -249,5 +249,14 @@ describe('parse AST', () => {
             "orderby": null,
             "limit": null
         });
+    });
+});
+
+describe('get columnList', () => {
+    it('should return all tables', () => {
+        const script = 'select * from customer where id in (select customer_id from orders where total_cost > 1000);';
+        const tables = getTableList(script);
+        expect(tables).toContain('orders');
+        expect(tables).toContain('customer');
     });
 });

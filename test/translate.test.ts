@@ -32,14 +32,16 @@ describe('translate', () => {
     });
 
     describe('select', () => {
+
         beforeAll(async () => {
             await User.create({ firstName: 'Jane', lastName: 'Gate' });
             await User.create({ firstName: 'Bob' });
         });
+
         test('translate select where equal', async () => {
-            const func: Function = translate('select * from user where id = 0;');
-            const result :Array<any> = func({ user: User });
-            expect(result).toBe([{ id: 0, firstName: 'Jane', lastName: 'Gate' }]);
+            const func: Function = translate('select * from user where id = 1;');
+            const result :Array<any> = await func({ user: User });
+            expect(result).toMatchObject([{ id: 1, firstName: 'Jane', lastName: 'Gate' }]);
         });
     });
 });
