@@ -1,5 +1,8 @@
-import { parseAst, getTableList } from './utils/parseAst';
 import { AST, Select } from 'node-sql-parser/types';
+import * as _ from 'lodash';
+const { Op } = require('sequelize');
+import { parseAst, getTableList } from './utils/parseAst';
+import { whereOperatorMap } from "./mapper";
 
 const notSupportError = new Error('Not supported yet');
 
@@ -33,16 +36,16 @@ function mapLeftAndRight(left: object, right: object): Array<any> {
 export function getWhereOption(whereAst: any) {
     if (!whereAst) { return {}; }
     if (whereAst.type === 'binary_expr') {
-        if (whereAst.operator === '=') {
-            const sides = mapLeftAndRight(whereAst.left, whereAst.right);
-            const columnSides = sides.filter((side) => side.type === 'column_ref');
-            if (columnSides.length === 1) {
-                const columnSide = columnSides[0];
-                const anotherSide = sides.filter((side) => side.type !== 'column_ref')[0];
-                return {
-                    [columnSide.column]: anotherSide.value,
-                };
-            }
+        console.assert(whereAst.left && whereAst.right && whereAst.operator);
+        if (whereAst.left.type === 'column_ref') {
+            console.assert(whereAst.right.type !== 'column_ref');
+            const operator = _.head(whereOperatorMap.filter((op) => op.sql === whereAst.operator))?.node;
+            console.assert(operator !== undefined);
+            return {
+                [whereAst.left.column]: {
+                    [operator]: whereAst.right.value,
+                },
+            };
         }
     }
     throw notSupportError;
