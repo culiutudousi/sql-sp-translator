@@ -1,10 +1,11 @@
 import { AST, Select } from 'node-sql-parser/types';
 import * as _ from 'lodash';
-const { Op } = require('sequelize');
 import { parseAst, getTableList } from './utils/parseAst';
 import { whereOperatorMap } from "./mapper";
 
 const notSupportError = new Error('Not supported yet');
+
+const directValueType = ['number', 'string', 'null'];
 
 export function translate(script: string): Function {
     const ast: AST = parseAst(script)[0];
@@ -20,19 +21,6 @@ export function translate(script: string): Function {
     };
 }
 
-function mapLeftAndRight(left: object, right: object): Array<any> {
-    return [
-        {
-            side: 'left',
-            ...left,
-        },
-        {
-            side: 'right',
-            ...right,
-        },
-    ];
-}
-
 export function getWhereOption(whereAst: any) {
     if (!whereAst) { return {}; }
     if (whereAst.type === 'binary_expr') {
@@ -41,9 +29,16 @@ export function getWhereOption(whereAst: any) {
             console.assert(whereAst.right.type !== 'column_ref');
             const operator = _.head(whereOperatorMap.filter((op) => op.sql === whereAst.operator))?.node;
             console.assert(operator !== undefined);
+            console.assert([...directValueType, 'expr_list'].includes(whereAst.right.type));
+            let operatorRight;
+            if (directValueType.includes(whereAst.right.type)) {
+                operatorRight = whereAst.right.value;
+            } else if (whereAst.right.type === 'expr_list') {
+                operatorRight = whereAst.right.value.map((value) => value.value);
+            }
             return {
                 [whereAst.left.column]: {
-                    [operator]: whereAst.right.value,
+                    [operator]: operatorRight,
                 },
             };
         }

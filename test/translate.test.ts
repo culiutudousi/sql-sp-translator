@@ -85,22 +85,32 @@ describe('translate', () => {
             expect(result).toMatchObject([{ id: 1, firstName: 'Ben', lastName: 'Whitehead' }]);
         });
 
-        test('translate select where like %an%', async () => {
+        test('translate select where like contain (%an%)', async () => {
             const func: Function = translate(`select * from user where firstName like '%an%';`);
             const result :Array<any> = await func({ user: User });
             expect(result.length).toBe(2);
             expect(result).toMatchObject([{ firstName: 'Francis'}, { firstName: 'Morgan' }]);
         });
 
-        test('translate select where like %an', async () => {
+        test('translate select where like end with (%an)', async () => {
             const func: Function = translate(`select * from user where firstName like '%an';`);
             const result :Array<any> = await func({ user: User });
             expect(result.length).toBe(1);
             expect(result).toMatchObject([{ firstName: 'Morgan' }]);
         });
 
-        test('translate select where in', async () => {});
+        test('translate select where in', async () => {
+            const func: Function = translate(`select * from user where id in (2, 4);`);
+            const result :Array<any> = await func({ user: User });
+            expect(result.length).toBe(2);
+            expect(result).toMatchObject([{ id: 2 }, { id: 4 }]);
+        });
 
-        test('translate select where not between', async () => {});
+        test('translate select where not between', async () => {
+            const func: Function = translate(`select * from user where id between 2 and 4;`);
+            const result :Array<any> = await func({ user: User });
+            expect(result.length).toBe(3);
+            expect(result).toMatchObject([{ id: 2 }, { id: 3 }, { id: 4 }]);
+        });
     });
 });
